@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>日本語 AI面談 / Japanese AI Interview</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273449;
+    --ink:#f1f5f9; --sub:#94a3b8; --line:#334155;
+    --accent:#3b82f6; --accent2:#2563eb;
+    --ok:#22c55e; --rec:#ef4444; --warn:#f59e0b;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:radial-gradient(1200px 800px at 50% -10%,#1e293b,#0f172a 60%);
+    color:var(--ink); min-height:100dvh; line-height:1.6;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:20px 18px 60px;}
+  .screen{display:none;animation:fade .35s ease;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .card{
+    background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 24px; box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  h1{font-size:1.7rem;margin:0 0 6px;letter-spacing:.5px;}
+  h2{font-size:1.25rem;margin:0 0 4px;}
+  .lead{color:var(--sub);margin:0 0 22px;font-size:.98rem;}
+  .en{color:var(--sub);font-size:.85em;font-weight:400;}
+  .logo{
+    display:inline-flex;align-items:center;gap:10px;margin-bottom:14px;
+    font-weight:700;letter-spacing:1px;color:var(--accent);
+  }
+  .logo .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);}
+  label{display:block;font-weight:600;margin:16px 0 6px;font-size:.95rem;}
+  input[type=text]{
+    width:100%;padding:14px 15px;border-radius:12px;border:1px solid var(--line);
+    background:#0b1424;color:var(--ink);font-size:1.05rem;outline:none;
+  }
+  input[type=text]:focus{border-color:var(--accent);}
+  .btn{
+    appearance:none;border:0;cursor:pointer;font-weight:700;font-size:1.05rem;
+    padding:15px 26px;border-radius:14px;color:#fff;
+    background:linear-gradient(180deg,var(--accent),var(--accent2));
+    box-shadow:0 10px 24px rgba(37,99,235,.35);transition:transform .1s ease,opacity .2s;
+    display:inline-flex;align-items:center;gap:10px;justify-content:center;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);box-shadow:none;}
+  .btn.big{width:100%;padding:18px;font-size:1.15rem;margin-top:22px;}
+  .btn.ok{background:linear-gradient(180deg,#22c55e,#16a34a);box-shadow:0 10px 24px rgba(22,163,74,.35);}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .steps{display:flex;gap:8px;margin:18px 0 4px;flex-wrap:wrap;}
+  .steps li{
+    list-style:none;background:#0b1424;border:1px solid var(--line);
+    border-radius:10px;padding:8px 12px;font-size:.85rem;color:var(--sub);flex:1;min-width:120px;
+  }
+  .steps li b{color:var(--ink);display:block;font-size:.95rem;}
+  .note{
+    background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35);
+    color:#fde68a;border-radius:12px;padding:12px 14px;font-size:.9rem;margin-top:16px;
+  }
+  video{width:100%;border-radius:14px;background:#000;aspect-ratio:16/9;object-fit:cover;}
+  .preview-wrap{position:relative;}
+  .mic-meter{height:10px;background:#0b1424;border-radius:6px;overflow:hidden;margin-top:12px;border:1px solid var(--line);}
+  .mic-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--ok),var(--warn),var(--rec));transition:width .08s;}
+  .badge{
+    position:absolute;top:12px;left:12px;background:rgba(239,68,68,.92);
+    color:#fff;font-weight:700;padding:7px 13px;border-radius:999px;font-size:.85rem;
+    display:none;align-items:center;gap:8px;box-shadow:0 6px 18px rgba(0,0,0,.4);
+  }
+  .badge.on{display:inline-flex;}
+  .blink{width:10px;height:10px;border-radius:50%;background:#fff;animation:blink 1s infinite;}
+  @keyframes blink{50%{opacity:.2;}}
+  .progress{height:8px;background:#0b1424;border-radius:6px;overflow:hidden;margin:6px 0 18px;border:1px solid var(--line);}
+  .progress > div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#60a5fa);transition:width .4s;}
+  .qmeta{display:flex;justify-content:space-between;align-items:center;color:var(--sub);font-size:.9rem;margin-bottom:8px;}
+  .qcard{background:#0b1424;border:1px solid var(--line);border-radius:16px;padding:22px 20px;margin:6px 0 18px;}
+  .qjp{font-size:1.55rem;font-weight:700;line-height:1.7;margin:0 0 10px;}
+  .qjp rt{font-size:.55em;color:var(--accent);font-weight:600;}
+  .qen{color:var(--sub);font-size:1rem;margin:0;}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:1.1rem;color:var(--ink);}
+  .timer.low{color:var(--rec);}
+  .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  .controls .btn{flex:1;min-width:150px;}
+  .spk{background:transparent;border:1px solid var(--line);color:var(--accent);border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:700;font-size:.95rem;display:inline-flex;gap:8px;align-items:center;}
+  .spk:hover{background:rgba(59,130,246,.1);}
+  .finish-icon{font-size:3rem;text-align:center;margin:6px 0;}
+  .dl-list{list-style:none;padding:0;margin:16px 0;}
+  .dl-list li{background:#0b1424;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+  .dl-list .fn{font-size:.9rem;color:var(--sub);word-break:break-all;}
+  a.dlbtn{text-decoration:none;}
+  .center{text-align:center;}
+  .hint-sm{color:var(--sub);font-size:.82rem;margin-top:10px;}
+  .foot{text-align:center;color:#475569;font-size:.78rem;margin-top:26px;}
+  .kbd{background:#0b1424;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:.85em;}
+  .err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fecaca;border-radius:12px;padding:14px;margin-top:14px;font-size:.92rem;display:none;}
+  .err.on{display:block;}
+  @media (max-width:520px){
+    h1{font-size:1.4rem;} .qjp{font-size:1.3rem;} .card{padding:20px 16px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ 1. START ============ -->
+  <section id="screen-start" class="screen active">
+    <div class="card">
+      <div class="logo"><span class="dot"></span> AI 面談 SYSTEM</div>
+      <h1>日本語 面談 <span class="en">Japanese Interview</span></h1>
+      <p class="lead">この面談では、いくつかの質問に日本語で答えていただきます。あなたのカメラとマイクで録画します。<br>
+        <span class="en">You will answer a few questions in Japanese. Your camera and microphone will record your answers.</span></p>
+
+      <ul class="steps">
+        <li><b>① 名前 <span class="en">Name</span></b>お名前を入力</li>
+        <li><b>② 準備 <span class="en">Setup</span></b>カメラ・マイク確認</li>
+        <li><b>③ 面談 <span class="en">Interview</span></b>質問に答える</li>
+        <li><b>④ 送信 <span class="en">Send</span></b>録画を担当者へ</li>
+      </ul>
+
+      <label for="nameInput">お名前 <span class="en">Your name</span></label>
+      <input id="nameInput" type="text" placeholder="例：グエン ヴァン アン / Nguyen Van An" autocomplete="off" />
+
+      <label for="phoneInput">電話番号 <span class="en">Phone number</span></label>
+      <input id="phoneInput" type="tel" inputmode="tel" placeholder="例：090-1234-5678" autocomplete="off" />
+
+      <div class="note">
+        所要時間は約 <b id="estTime">7</b> 分です。静かな場所で受けてください。<br>
+        <span class="en">It takes about <b id="estTime2">7</b> minutes. Please find a quiet place.</span>
+      </div>
+
+      <div id="startErr" class="err"></div>
+      <button id="toSetup" class="btn big">はじめる <span class="en">Start</span> →</button>
+    </div>
+    <p class="foot">推奨ブラウザ：Google Chrome / Microsoft Edge・Safari &nbsp;|&nbsp; PC・スマートフォン対応</p>
+  </section>
+
+  <!-- ============ 2. SETUP ============ -->
+  <section id="screen-setup" class="screen">
+    <div class="card">
+      <h2>準備 <span class="en">Camera & Mic check</span></h2>
+      <p class="lead">カメラに顔が映り、マイクのバーが動くことを確認してください。<br>
+        <span class="en">Check that your face is visible and the mic bar moves when you speak.</span></p>
+
+      <div class="preview-wrap">
+        <video id="preview" autoplay playsinline muted></video>
+      </div>
+      <div id="audioNote" class="note" style="display:none;text-align:center;">
+        🎤 音声のみモードです（顔は記録されません）<br><span class="en">Audio-only mode (no video)</span>
+      </div>
+      <div class="mic-meter"><div id="micFill" class="mic-fill"></div></div>
+      <p class="hint-sm">🎤 話すと緑のバーが動きます / The bar moves when you talk.</p>
+
+      <div id="setupErr" class="err"></div>
+
+      <div class="row" style="margin-top:18px;">
+        <button id="backToStart" class="btn ghost">← 戻る</button>
+        <button id="toInterview" class="btn ok" style="flex:1;" disabled>カメラを準備中… <span class="en">Preparing…</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. INTERVIEW ============ -->
+  <section id="screen-interview" class="screen">
+    <div class="card">
+      <div class="qmeta">
+        <span>質問 <b id="qNum">1</b> / <span id="qTotal">8</span> <span class="en">Question</span></span>
+        <span class="badge on" id="recBadge"><span class="blink"></span> 録画中 REC <span id="recTime">00:00</span></span>
+      </div>
+      <div class="progress"><div id="qProgress"></div></div>
+
+      <div class="qcard">
+        <div class="qjp" id="qTextJp"></div>
+        <p class="qen" id="qTextEn"></p>
+        <button id="speakBtn" class="spk">🔊 もう一度 聞く <span class="en">Listen again</span></button>
+      </div>
+
+      <div class="qmeta" style="margin-bottom:6px;">
+        <span id="phaseLabel">回答時間 <span class="en">Answer time</span></span>
+        <span class="timer" id="answerTimer">00:00</span>
+      </div>
+
+      <div class="controls">
+        <button id="nextBtn" class="btn">次の質問へ <span class="en">Next</span> →</button>
+      </div>
+      <p class="hint-sm">答え終わったら「次の質問へ」を押してください。ゆっくりで大丈夫です。<br>
+        <span class="en">Press "Next" when you finish. Take your time.</span></p>
+
+      <video id="liveSelf" autoplay playsinline muted style="margin-top:16px;max-height:160px;"></video>
+    </div>
+  </section>
+
+  <!-- ============ 4. FINISH ============ -->
+  <section id="screen-finish" class="screen">
+    <div class="card center">
+      <div class="finish-icon">✅</div>
+      <h2>お疲れ様でした！ <span class="en">All done!</span></h2>
+      <p class="lead">面談は終了しました。下の録画ファイルを保存して、担当者に送ってください。<br>
+        <span class="en">The interview is finished. Please save the file below and send it to the staff.</span></p>
+
+      <div id="uploadBox" class="note center" style="display:none;">
+        <span id="uploadStatus"></span>
+      </div>
+
+      <ul class="dl-list" id="dlList"></ul>
+
+      <div id="sendNote" class="note center">
+        📩 この録画ファイルを <b>担当者（採用担当）</b> にメールなどで送ってください。<br>
+        <span class="en">Please send this recording to the hiring staff by email.</span>
+      </div>
+
+      <p class="hint-sm">ダウンロードが始まらない場合は、上の「ダウンロード」ボタンを押してください。</p>
+    </div>
+    <p class="foot">日本語 AI面談システム</p>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   面談の質問リスト（ここを編集すれば質問を変えられます）
+   jp: 表示文（ふりがな用に <ruby> 使用可） / read: 読み上げ用テキスト / en: 英語ヒント
+   ============================================================ */
+const QUESTIONS = [
+  {
+    jp:'<ruby>自己紹介<rt>じこしょうかい</rt></ruby>をお<ruby>願<rt>ねが</rt></ruby>いできますか？',
+    read:'自己紹介をお願いできますか？',
+    en:'Could you introduce yourself?'
+  },
+  {
+    jp:'あなたの<ruby>住<rt>す</rt></ruby>んでいる<ruby>場所<rt>ばしょ</rt></ruby>、<ruby>最寄<rt>もよ</rt></ruby>りの<ruby>駅<rt>えき</rt></ruby>はどこですか？',
+    read:'あなたの住んでいる場所、最寄りの駅はどこですか？',
+    en:'Where do you live? What is your nearest train station?'
+  },
+  {
+    jp:'<ruby>日本<rt>にほん</rt></ruby>に<ruby>来<rt>き</rt></ruby>た きっかけを<ruby>教<rt>おし</rt></ruby>えてもらえますか？',
+    read:'日本に来たきっかけを教えてもらえますか？',
+    en:'What brought you to Japan?'
+  },
+  {
+    jp:'<ruby>現在<rt>げんざい</rt></ruby>どんな お<ruby>仕事<rt>しごと</rt></ruby>をしていますか？<ruby>具体的<rt>ぐたいてき</rt></ruby>に<ruby>説明<rt>せつめい</rt></ruby>してください。<ruby>何<rt>なん</rt></ruby>というお<ruby>店<rt>みせ</rt></ruby>で、どんなことをしていますか？',
+    read:'現在どんなお仕事をしていますか？具体的に説明してください。何というお店で、どんなことをしていますか？',
+    en:'What work do you do now? Please explain in detail — at what shop, and what do you do there?'
+  },
+  {
+    jp:'なぜ<ruby>今<rt>いま</rt></ruby>の<ruby>会社<rt>かいしゃ</rt></ruby>を<ruby>辞<rt>や</rt></ruby>めて、<ruby>違<rt>ちが</rt></ruby>う<ruby>会社<rt>かいしゃ</rt></ruby>に<ruby>行<rt>い</rt></ruby>こうと<ruby>思<rt>おも</rt></ruby>ったのですか？',
+    read:'なぜ今の会社を辞めて、違う会社に行こうと思ったのですか？',
+    en:'Why did you decide to leave your current company and move to a different one?'
+  },
+  {
+    jp:'<ruby>今<rt>いま</rt></ruby>の<ruby>会社<rt>かいしゃ</rt></ruby>を<ruby>辞<rt>や</rt></ruby>めたい<ruby>理由<rt>りゆう</rt></ruby>は<ruby>何<rt>なん</rt></ruby>ですか？',
+    read:'今の会社を辞めたい理由は何ですか？',
+    en:'What is your reason for wanting to leave your current company?'
+  }
+];
+const PREP_SECONDS = 0;      // 各質問の準備時間（秒）。0で即開始
+const ESTIMATE_MIN = 6;      // 目安時間（分）表示用
+
+/* ============================================================
+   ★ 自動アップロード設定 ★
+   Google Apps Script(受け取り口)の「ウェブアプリURL(.../exec)」を
+   下の '' の中に貼り付けてください。
+   空のままなら、アップロードせずダウンロードだけになります。
+   例: const UPLOAD_URL = 'https://script.google.com/macros/s/AKfy.../exec';
+   ============================================================ */
+const UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzVGMxny6ZI536kvKflzUEv_p2QNd1eKyVflXVJCCEB64Jlb_NAGYuSrHJtys1215auSA/exec';
+
+// 録画の画質（ファイルを小さく保つ設定。数値を上げると高画質＝大きいファイル）
+const VIDEO_W = 640, VIDEO_H = 480;
+const VIDEO_BPS = 900000;    // 映像ビットレート(約0.9Mbps)
+const AUDIO_BPS = 64000;     // 音声ビットレート
+
+/* ============================================================ */
+const $ = id => document.getElementById(id);
+const screens = {
+  start:$('screen-start'), setup:$('screen-setup'),
+  interview:$('screen-interview'), finish:$('screen-finish')
+};
+function show(name){
+  Object.values(screens).forEach(s=>s.classList.remove('active'));
+  screens[name].classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+let candidateName = '';
+let candidatePhone = '';
+let mediaStream = null;
+let audioOnly = false;
+let recorder = null;
+let recordedChunks = [];
+let recStartTs = 0;
+let recTimerInt = null;
+let ansTimerInt = null;
+let qIndex = 0;
+let questionLog = [];   // {n, question, atSeconds}
+let recMime = '';
+let recExt = 'webm';
+// 文字起こし（日本語会話レベルの自動推定用）
+let recognition = null;
+let transcript = '';
+let recogActive = false;
+
+$('estTime').textContent = ESTIMATE_MIN;
+$('estTime2').textContent = ESTIMATE_MIN;
+$('qTotal').textContent = QUESTIONS.length;
+
+/* ---------- 音声読み上げ ---------- */
+let jpVoice = null;
+function pickVoice(){
+  const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  jpVoice = vs.find(v=>/ja(-|_)?JP/i.test(v.lang)) || vs.find(v=>/^ja/i.test(v.lang)) || null;
+}
+if(window.speechSynthesis){
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+function speak(text){
+  if(!window.speechSynthesis) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP'; u.rate = 0.92; u.pitch = 1.0;
+    if(jpVoice) u.voice = jpVoice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- START → SETUP ---------- */
+$('toSetup').addEventListener('click', async ()=>{
+  const err = $('startErr');
+  candidateName = $('nameInput').value.trim();
+  candidatePhone = $('phoneInput').value.trim();
+  if(!candidateName){
+    err.textContent = 'お名前を入力してください。 / Please enter your name.';
+    err.classList.add('on'); return;
+  }
+  if(!candidatePhone){
+    err.textContent = '電話番号を入力してください。 / Please enter your phone number.';
+    err.classList.add('on'); return;
+  }
+  err.classList.remove('on');
+  show('setup');
+  await initCamera();
+});
+$('nameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') $('phoneInput').focus(); });
+$('phoneInput').addEventListener('keydown', e=>{ if(e.key==='Enter') $('toSetup').click(); });
+
+/* ---------- カメラ・マイク ---------- */
+async function initCamera(){
+  const err = $('setupErr');
+  err.classList.remove('on');
+  const goBtn = $('toInterview');
+  goBtn.disabled = true;
+  goBtn.innerHTML = 'カメラを準備中… <span class="en">Preparing…</span>';
+
+  // カメラAPI自体が無い場合（Safariでファイル直開き等）→ https案内
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    if(location.protocol === 'file:'){
+      err.innerHTML = insecureMsg();
+    }else{
+      err.innerHTML = 'このブラウザは録画に対応していません。Chrome か Safari の最新版でお試しください。<br>'
+        + '<span class="en">This browser cannot record. Please use the latest Chrome or Safari.</span>';
+    }
+    err.classList.add('on');
+    goBtn.disabled = true;
+    goBtn.innerHTML = 'カメラを使えません <span class="en">Camera unavailable</span>';
+    return;
+  }
+
+  // ① 映像＋音声を試す（file:// でも Chrome なら動くことが多いのでまず試す）
+  //    → ②ダメなら音声のみ → ③それも不可なら原因別に案内
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video:{ width:{ideal:VIDEO_W}, height:{ideal:VIDEO_H}, facingMode:'user' },
+      audio:{ echoCancellation:true, noiseSuppression:true }
+    });
+    audioOnly = false;
+    $('preview').srcObject = mediaStream;
+    setupMicMeter(mediaStream);
+    goBtn.disabled = false;
+    goBtn.innerHTML = '面談を はじめる <span class="en">Start interview</span> →';
+  }catch(e){
+    // 許可拒否・カメラ使用中など。マイクだけで救済を試みる。
+    try{
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio:{ echoCancellation:true, noiseSuppression:true }
+      });
+      audioOnly = true;
+      $('preview').style.display = 'none';
+      $('audioNote').style.display = 'block';
+      setupMicMeter(mediaStream);
+      goBtn.disabled = false;
+      goBtn.innerHTML = '音声だけで はじめる <span class="en">Start (audio only)</span> →';
+      err.innerHTML = 'カメラは使えませんでしたが、<b>マイクの音声だけで面談を進められます</b>（顔は記録されません）。'
+        + 'カメラも使いたい場合は、下の方法で許可してください。<br><span class="en">Camera unavailable, but you can continue with audio only.</span>'
+        + '<div style="margin-top:8px">' + permissionHelp() + '</div>';
+      err.classList.add('on');
+    }catch(e2){
+      // マイクも取れない → 原因別に案内
+      err.innerHTML = permissionDeniedMsg(e2 && e2.name || e && e.name || '');
+      err.classList.add('on');
+      goBtn.disabled = true;
+      goBtn.innerHTML = 'もう一度 試す <span class="en">Try again</span>';
+      goBtn.onclick = ()=>{ goBtn.onclick=null; initCamera(); };
+    }
+  }
+}
+function insecureMsg(){
+  return 'このページは<b>ファイルを直接開いた状態</b>のため、カメラ・マイクを使えません（ブラウザの安全ルール）。<br>'
+    + '<span class="en">Opened as a local file — the browser blocks camera/mic here.</span><br>'
+    + '<b style="color:#fde68a">→ 担当者から届いた「https:// で始まるリンク」から開いてください。</b><br>'
+    + '<span class="en">Please open the https:// link provided by the staff instead.</span>';
+}
+function permissionHelp(){
+  return 'カメラの許可方法：アドレスバー左の <b>🔒 / カメラのマーク</b> をクリック → 「カメラ」と「マイク」を<b>許可</b>に変更 → ページを再読み込み。<br>'
+    + '<span class="en">Click the 🔒 (or camera) icon in the address bar → set Camera & Microphone to "Allow" → reload.</span>';
+}
+function permissionDeniedMsg(name){
+  let cause = '';
+  if(name==='NotAllowedError') cause = 'カメラ・マイクの使用が<b>ブロック</b>されています。';
+  else if(name==='NotFoundError') cause = 'カメラまたはマイクが<b>見つかりません</b>。接続を確認してください。';
+  else if(name==='NotReadableError') cause = 'カメラ・マイクが<b>他のアプリ（Zoom等）で使用中</b>の可能性があります。他のアプリを閉じてください。';
+  else cause = 'カメラ・マイクを使えませんでした。';
+  let extra = permissionHelp();
+  if(location.protocol === 'file:'){
+    extra = '<b style="color:#fde68a">ヒント：ファイルを直接開いています。上手くいかない場合は <u>Google Chrome</u> で開くか、担当者の https:// リンクから開いてください。</b><br>'
+      + '<span class="en">Tip: You opened a local file. Try Google Chrome, or open the https:// link.</span><div style="margin-top:8px">' + permissionHelp() + '</div>';
+  }
+  return cause + '<br><span class="en">'+ (name||'') +'</span><div style="margin-top:8px">' + extra + '</div>';
+}
+function setupMicMeter(stream){
+  try{
+    const ac = new (window.AudioContext||window.webkitAudioContext)();
+    const src = ac.createMediaStreamSource(stream);
+    const an = ac.createAnalyser(); an.fftSize = 512;
+    src.connect(an);
+    const data = new Uint8Array(an.frequencyBinCount);
+    const fill = $('micFill');
+    (function loop(){
+      an.getByteFrequencyData(data);
+      let sum=0; for(let i=0;i<data.length;i++) sum+=data[i];
+      const avg = sum/data.length;
+      fill.style.width = Math.min(100, avg*1.6) + '%';
+      requestAnimationFrame(loop);
+    })();
+  }catch(e){}
+}
+$('backToStart').addEventListener('click', ()=>{ show('start'); });
+
+/* ---------- SETUP → INTERVIEW ---------- */
+$('toInterview').addEventListener('click', ()=>{
+  if(!mediaStream) return;
+  show('interview');
+  if(audioOnly){
+    $('liveSelf').style.display = 'none';
+  }else{
+    $('liveSelf').srcObject = mediaStream;
+  }
+  startRecording();
+  qIndex = 0;
+  renderQuestion();
+});
+
+/* ---------- 録画 ---------- */
+function chooseMime(){
+  const cands = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm',
+    'video/mp4'
+  ];
+  for(const c of cands){
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return '';
+}
+function startRecording(){
+  recordedChunks = [];
+  recMime = chooseMime();
+  recExt = recMime.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+  var opts = recMime ? { mimeType:recMime, audioBitsPerSecond:AUDIO_BPS } : { audioBitsPerSecond:AUDIO_BPS };
+  if(!audioOnly) opts.videoBitsPerSecond = VIDEO_BPS;
+  try{
+    recorder = new MediaRecorder(mediaStream, opts);
+  }catch(e){
+    try{ recorder = new MediaRecorder(mediaStream, recMime ? { mimeType:recMime } : undefined); }
+    catch(e2){ recorder = new MediaRecorder(mediaStream); }
+  }
+  recorder.ondataavailable = e=>{ if(e.data && e.data.size>0) recordedChunks.push(e.data); };
+  recorder.onstop = buildDownloads;
+  recorder.start(1000); // 1秒ごとにデータ確定（長時間でも安全）
+  recStartTs = Date.now();
+  $('recBadge').classList.add('on');
+  recTimerInt = setInterval(()=>{ $('recTime').textContent = fmt((Date.now()-recStartTs)/1000); }, 500);
+  startTranscription();
+}
+function stopRecording(){
+  clearInterval(recTimerInt);
+  stopTranscription();
+  if(recorder && recorder.state!=='inactive') recorder.stop();
+  if(mediaStream){ /* keep tracks until stop fires; stop after */ }
+}
+
+/* ---------- 文字起こし（Chromeの音声認識・日本語） ---------- */
+function startTranscription(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ recognition = null; return; }   // 非対応ブラウザは文字起こしなし
+  try{
+    recognition = new SR();
+    recognition.lang = 'ja-JP';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.onresult = (ev)=>{
+      for(let i=ev.resultIndex; i<ev.results.length; i++){
+        if(ev.results[i].isFinal){ transcript += ev.results[i][0].transcript + ' '; }
+      }
+    };
+    recognition.onerror = ()=>{};
+    recognition.onend = ()=>{ if(recogActive){ try{ recognition.start(); }catch(e){} } };
+    recogActive = true;
+    recognition.start();
+  }catch(e){ recognition = null; }
+}
+function stopTranscription(){
+  recogActive = false;
+  if(recognition){ try{ recognition.stop(); }catch(e){} }
+}
+
+/* ---------- 日本語会話レベルの自動推定（参考値） ----------
+   N1=ペラペラ / N2=ビジネス / N3=日常会話 / N4=かたこと / N5=全く話せない
+   文字起こしの分量・語彙・敬語や接続表現などから概算する簡易ロジック。 */
+function estimateLevel(t){
+  const raw = (t||'').trim();
+  const clean = raw.replace(/\s/g,'');
+  const chars = clean.length;
+  if(chars < 4) return { level:'N5', chars, note:'ほとんど発話が聞き取れませんでした' };
+  const adv = /(ございます|でしょうか|申し訳|恐れ入り|承知|かしこまり|however|しかし|なぜなら|したがって|具体的|経験|責任|効率|改善|提案|課題|目標|理由|得意|貢献|将来|成長)/g;
+  const advCount = (raw.match(adv)||[]).length;
+  const uniq = new Set(raw.split(/[\s、。！？!?,.]/).filter(Boolean)).size;
+  let score = 1;                 // 1→N5 ... 5→N1
+  if(chars >= 15) score = 2;
+  if(chars >= 50) score = 3;
+  if(chars >= 130) score = 4;
+  if(chars >= 280) score = 5;
+  if(advCount >= 3 && score < 5) score++;
+  if(uniq   >= 30 && score < 5) score++;
+  score = Math.min(5, Math.max(1, score));
+  const map = { 1:'N5', 2:'N4', 3:'N3', 4:'N2', 5:'N1' };
+  return { level: map[score], chars, advCount, uniq };
+}
+
+/* ---------- 質問の進行 ---------- */
+function renderQuestion(){
+  const q = QUESTIONS[qIndex];
+  $('qNum').textContent = qIndex+1;
+  $('qProgress').style.width = ((qIndex)/QUESTIONS.length*100) + '%';
+  $('qTextJp').innerHTML = q.jp;
+  $('qTextEn').textContent = q.en;
+  // ログにタイムスタンプ記録
+  questionLog.push({ n:qIndex+1, question:q.read, atSeconds: Math.round((Date.now()-recStartTs)/1000) });
+  // 回答タイマー（経過表示）
+  startAnswerTimer();
+  // 読み上げ
+  setTimeout(()=>speak(q.read), 350);
+  // 最後の質問はボタン表記を変更
+  $('nextBtn').innerHTML = (qIndex === QUESTIONS.length-1)
+    ? '面談を おわる <span class="en">Finish</span> ✓'
+    : '次の質問へ <span class="en">Next</span> →';
+}
+function startAnswerTimer(){
+  clearInterval(ansTimerInt);
+  const t0 = Date.now();
+  $('answerTimer').classList.remove('low');
+  $('answerTimer').textContent = '00:00';
+  ansTimerInt = setInterval(()=>{
+    $('answerTimer').textContent = fmt((Date.now()-t0)/1000);
+  }, 500);
+}
+$('speakBtn').addEventListener('click', ()=> speak(QUESTIONS[qIndex].read));
+$('nextBtn').addEventListener('click', ()=>{
+  clearInterval(ansTimerInt);
+  if(qIndex < QUESTIONS.length-1){
+    qIndex++;
+    renderQuestion();
+  }else{
+    finishInterview();
+  }
+});
+
+function finishInterview(){
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  $('qProgress').style.width = '100%';
+  stopRecording();          // onstop → buildDownloads → show finish
+}
+
+/* ---------- 終了・ダウンロード生成 ---------- */
+function buildDownloads(){
+  // カメラ停止
+  if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); }
+
+  const safeName = (candidateName || 'candidate').replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,'_');
+  const dt = new Date();
+  const stamp = dt.getFullYear()+pad(dt.getMonth()+1)+pad(dt.getDate())+'_'+pad(dt.getHours())+pad(dt.getMinutes());
+  const baseName = `面談_${safeName}_${stamp}`;
+
+  // 動画Blob
+  const videoBlob = new Blob(recordedChunks, { type: recMime || 'video/webm' });
+  const videoUrl = URL.createObjectURL(videoBlob);
+  const videoFile = `${baseName}.${recExt}`;
+
+  // 日本語会話レベルの自動推定（参考値）
+  const est = estimateLevel(transcript);
+
+  // ログテキスト
+  let log = `日本語 AI面談 記録 / Interview Log\n`;
+  log += `====================================\n`;
+  log += `氏名 / Name : ${candidateName}\n`;
+  log += `電話番号 / Phone : ${candidatePhone}\n`;
+  log += `日時 / Date : ${dt.toLocaleString('ja-JP')}\n`;
+  log += `録画時間 / Duration : ${fmt((Date.now()-recStartTs)/1000)}\n`;
+  log += `AI推定 日本語レベル（参考）: ${est.level}  (発話文字数:${est.chars||0})\n`;
+  log += `動画ファイル / Video : ${videoFile}\n`;
+  log += `====================================\n`;
+  log += `質問とタイムスタンプ / Questions & timestamps\n`;
+  log += `(動画のこの時間から各質問への回答が始まります)\n\n`;
+  questionLog.forEach(item=>{
+    log += `[${fmt(item.atSeconds)}]  Q${item.n}. ${item.question}\n\n`;
+  });
+  log += `====================================\n`;
+  log += `文字起こし（自動・参考）/ Transcript:\n${transcript.trim() || '(なし)'}\n`;
+  const logBlob = new Blob([log], { type:'text/plain;charset=utf-8' });
+  const logUrl = URL.createObjectURL(logBlob);
+  const logFile = `${baseName}_記録.txt`;
+
+  // リスト描画
+  const ul = $('dlList');
+  ul.innerHTML = '';
+  ul.appendChild(makeDlItem(audioOnly ? '🎙 面談 録音 (音声)' : '🎬 面談 録画 (動画)', videoFile, videoUrl, videoFile, true));
+  ul.appendChild(makeDlItem('📝 質問リスト・記録 (テキスト)', logFile, logUrl, logFile, false));
+
+  show('finish');
+  // 動画を自動ダウンロード（アップロード成否に関わらず、必ず手元に残す）
+  setTimeout(()=>autoDownload(videoUrl, videoFile), 400);
+
+  // 受け取り口が設定されていれば自動アップロード
+  if(UPLOAD_URL && /^https:\/\//.test(UPLOAD_URL)){
+    uploadToDrive(videoBlob, videoFile, log, est);
+  }
+}
+
+/* ---------- Google Drive 自動アップロード ---------- */
+function uploadToDrive(blob, filename, log, est){
+  const box = $('uploadBox'), st = $('uploadStatus');
+  box.style.display = 'block';
+  st.innerHTML = '⏳ 録画を担当者に送信しています… <span class="en">Uploading…</span>';
+  const reader = new FileReader();
+  reader.onload = function(){
+    // dataURL "data:...;base64,XXXX" の base64 部分だけ取り出す
+    // ※mimeに "vp9,opus" のようにカンマが含まれるため 'base64,' で分割する
+    const b64 = String(reader.result).split('base64,')[1] || '';
+    const payload = JSON.stringify({
+      name: candidateName || '無記名',
+      phone: candidatePhone || '',
+      aiLevel: (est && est.level) || '',
+      transcript: transcript.trim(),
+      transcriptChars: (est && est.chars) || 0,
+      filename: filename,
+      mimeType: blob.type || 'video/webm',
+      dataBase64: b64,
+      log: log
+    });
+    // Apps Script はプリフライトを避けるため text/plain で送る
+    fetch(UPLOAD_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: payload
+    }).then(()=>{
+      // no-cors のため応答は読めないが、送信は完了している
+      st.innerHTML = '✅ 送信が完了しました。担当者に届いています。<br><span class="en">Sent to the staff successfully.</span>';
+      box.style.borderColor = 'rgba(34,197,94,.5)';
+      box.style.background = 'rgba(34,197,94,.1)';
+      box.style.color = '#bbf7d0';
+      $('sendNote').style.display = 'none';
+    }).catch(function(err){
+      st.innerHTML = '⚠️ 自動送信ができませんでした。お手数ですが、下の録画ファイルを担当者に送ってください。<br>'
+        + '<span class="en">Auto-send failed. Please send the file below to the staff.</span>';
+    });
+  };
+  reader.onerror = function(){
+    st.innerHTML = '⚠️ 自動送信ができませんでした。下の録画ファイルを担当者に送ってください。';
+  };
+  reader.readAsDataURL(blob);
+}
+function makeDlItem(title, sub, url, filename, primary){
+  const li = document.createElement('li');
+  const left = document.createElement('div');
+  left.innerHTML = `<div style="font-weight:700">${title}</div><div class="fn">${sub}</div>`;
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.className='dlbtn';
+  a.innerHTML = `<span class="btn ${primary?'':'ghost'}" style="padding:11px 18px;font-size:.95rem">⬇ ダウンロード</span>`;
+  li.appendChild(left); li.appendChild(a);
+  return li;
+}
+function autoDownload(url, filename){
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- ユーティリティ ---------- */
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmt(sec){ sec=Math.max(0,Math.floor(sec)); return pad(Math.floor(sec/60))+':'+pad(sec%60); }
+
+/* ページ離脱ガード（面談中） */
+window.addEventListener('beforeunload', e=>{
+  if(recorder && recorder.state==='recording'){ e.preventDefault(); e.returnValue=''; }
+});
+</script>
+</body>
+</html>
