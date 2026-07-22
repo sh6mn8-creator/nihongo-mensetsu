@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>日本語 AI面談 / Japanese AI Interview</title>
+<title>AI面談 / AI Interview</title>
 <style>
   :root{
     --bg:#0f172a; --card:#1e293b; --card2:#273449;
@@ -38,11 +38,19 @@
   }
   .logo .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);}
   label{display:block;font-weight:600;margin:16px 0 6px;font-size:.95rem;}
-  input[type=text]{
+  input[type=text],input[type=tel]{
     width:100%;padding:14px 15px;border-radius:12px;border:1px solid var(--line);
     background:#0b1424;color:var(--ink);font-size:1.05rem;outline:none;
   }
-  input[type=text]:focus{border-color:var(--accent);}
+  input[type=text]:focus,input[type=tel]:focus{border-color:var(--accent);}
+  select{
+    width:100%;padding:14px 15px;border-radius:12px;border:1px solid var(--line);
+    background:#0b1424;color:var(--ink);font-size:1.05rem;outline:none;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;
+  }
+  select:focus{border-color:var(--accent);}
+  select option{background:#0b1424;color:var(--ink);}
   .btn{
     appearance:none;border:0;cursor:pointer;font-weight:700;font-size:1.05rem;
     padding:15px 26px;border-radius:14px;color:#fff;
@@ -114,8 +122,8 @@
   <!-- ============ 1. START ============ -->
   <section id="screen-start" class="screen active">
     <div class="card">
-      <div class="logo"><span class="dot"></span> AI 面談 SYSTEM</div>
-      <h1>日本語 面談 <span class="en">Japanese Interview</span></h1>
+      <div class="logo"><span class="dot"></span> AI面談 SYSTEM</div>
+      <h1>AI 面談 <span class="en">AI Interview</span></h1>
       <p class="lead">この面談では、いくつかの質問に日本語で答えていただきます。あなたのカメラとマイクで録画します。<br>
         <span class="en">You will answer a few questions in Japanese. Your camera and microphone will record your answers.</span></p>
 
@@ -131,6 +139,14 @@
 
       <label for="phoneInput">電話番号 <span class="en">Phone number</span></label>
       <input id="phoneInput" type="tel" inputmode="tel" placeholder="例：090-1234-5678" autocomplete="off" />
+
+      <label for="jobSelect">希望職種 <span class="en">Desired job type</span></label>
+      <select id="jobSelect">
+        <option value="">▼ 選んでください / Please select</option>
+        <option value="sougo">総合（どの職種でも） / General</option>
+        <option value="hotel">ホテル・接客 / Hotel & Service</option>
+        <option value="shokuhin">食品製造 / Food manufacturing</option>
+      </select>
 
       <div class="note">
         所要時間は約 <b id="estTime">7</b> 分です。静かな場所で受けてください。<br>
@@ -219,7 +235,7 @@
 
       <p class="hint-sm">ダウンロードが始まらない場合は、上の「ダウンロード」ボタンを押してください。</p>
     </div>
-    <p class="foot">日本語 AI面談システム</p>
+    <p class="foot">AI面談システム</p>
   </section>
 
 </div>
@@ -229,40 +245,99 @@
    面談の質問リスト（ここを編集すれば質問を変えられます）
    jp: 表示文（ふりがな用に <ruby> 使用可） / read: 読み上げ用テキスト / en: 英語ヒント
    ============================================================ */
-const QUESTIONS = [
-  {
-    jp:'<ruby>自己紹介<rt>じこしょうかい</rt></ruby>をお<ruby>願<rt>ねが</rt></ruby>いできますか？',
-    read:'自己紹介をお願いできますか？',
-    en:'Could you introduce yourself?'
+/* 職種ごとの質問セット。希望職種で自動的に切り替わります。
+   新しい職種を足したいときは、ここに { key, label, estMin, questions:[...] } を追加し、
+   START画面の <select id="jobSelect"> にも同じ key の <option> を足してください。 */
+const QUESTION_SETS = {
+  // ===== 総合（どの職種でも使える汎用）8問 =====
+  sougo: {
+    label:'総合', estMin:7,
+    questions:[
+      { jp:'まず、<ruby>自己紹介<rt>じこしょうかい</rt></ruby>をお<ruby>願<rt>ねが</rt></ruby>いできますか？お<ruby>名前<rt>なまえ</rt></ruby>と<ruby>出身<rt>しゅっしん</rt></ruby>を<ruby>教<rt>おし</rt></ruby>えてください。',
+        read:'まず、自己紹介をお願いできますか？お名前と出身を教えてください。',
+        en:'Please introduce yourself. Tell me your name and where you are from.' },
+      { jp:'これまでに どんな お<ruby>仕事<rt>しごと</rt></ruby>を してきたか、<ruby>全部<rt>ぜんぶ</rt></ruby><ruby>説明<rt>せつめい</rt></ruby>してください。',
+        read:'これまでにどんなお仕事をしてきたか、全部説明してください。',
+        en:'Please explain all the jobs you have done so far.' },
+      { jp:'<ruby>転職<rt>てんしょく</rt></ruby>しようと<ruby>思<rt>おも</rt></ruby>った<ruby>理由<rt>りゆう</rt></ruby>は<ruby>何<rt>なん</rt></ruby>ですか？',
+        read:'転職しようと思った理由は何ですか？',
+        en:'Why do you want to change jobs?' },
+      { jp:'あなたの<ruby>長所<rt>ちょうしょ</rt></ruby>と<ruby>短所<rt>たんしょ</rt></ruby>を<ruby>教<rt>おし</rt></ruby>えてください。',
+        read:'あなたの長所と短所を教えてください。',
+        en:'Please tell me your strengths and weaknesses.' },
+      { jp:'<ruby>今<rt>いま</rt></ruby>までで <ruby>一番<rt>いちばん</rt></ruby> がんばったことは<ruby>何<rt>なん</rt></ruby>ですか？',
+        read:'今までで一番がんばったことは何ですか？',
+        en:'What is the thing you have worked hardest at so far?' },
+      { jp:'これから どんな お<ruby>仕事<rt>しごと</rt></ruby>が したいですか？',
+        read:'これから、どんなお仕事がしたいですか？',
+        en:'What kind of work do you want to do from now on?' },
+      { jp:'<ruby>現在<rt>げんざい</rt></ruby>の ビザの<ruby>種類<rt>しゅるい</rt></ruby>は<ruby>何<rt>なん</rt></ruby>ですか？',
+        read:'現在のビザの種類は何ですか？',
+        en:'What is your current visa type?' },
+      { jp:'<ruby>面接<rt>めんせつ</rt></ruby>が できる<ruby>日<rt>ひ</rt></ruby>は いつですか？',
+        read:'面接ができる日はいつですか？',
+        en:'When are you available for an interview?' }
+    ]
   },
-  {
-    jp:'あなたの<ruby>住<rt>す</rt></ruby>んでいる<ruby>場所<rt>ばしょ</rt></ruby>、<ruby>最寄<rt>もよ</rt></ruby>りの<ruby>駅<rt>えき</rt></ruby>はどこですか？',
-    read:'あなたの住んでいる場所、最寄りの駅はどこですか？',
-    en:'Where do you live? What is your nearest train station?'
+  // ===== ホテル・接客 7問 =====
+  hotel: {
+    label:'ホテル・接客', estMin:6,
+    questions:[
+      { jp:'まず、<ruby>自己紹介<rt>じこしょうかい</rt></ruby>をお<ruby>願<rt>ねが</rt></ruby>いできますか？お<ruby>名前<rt>なまえ</rt></ruby>と、どこから<ruby>来<rt>き</rt></ruby>たか<ruby>教<rt>おし</rt></ruby>えてください。',
+        read:'まず、自己紹介をお願いできますか？お名前と、どこから来たか教えてください。',
+        en:'Please introduce yourself. Tell me your name and where you are from.' },
+      { jp:'これまでに ホテルや<ruby>接客<rt>せっきゃく</rt></ruby>の お<ruby>仕事<rt>しごと</rt></ruby>を した<ruby>経験<rt>けいけん</rt></ruby>は ありますか？あれば<ruby>具体的<rt>ぐたいてき</rt></ruby>に<ruby>教<rt>おし</rt></ruby>えてください。',
+        read:'これまでに、ホテルや接客のお仕事をした経験はありますか？あれば具体的に教えてください。',
+        en:'Do you have experience in hotels or customer service? If so, please tell me in detail.' },
+      { jp:'お<ruby>客様<rt>きゃくさま</rt></ruby>が チェックインに <ruby>来<rt>こ</rt></ruby>られました。<ruby>最初<rt>さいしょ</rt></ruby>に<ruby>何<rt>なん</rt></ruby>と<ruby>言<rt>い</rt></ruby>って お<ruby>迎<rt>むか</rt></ruby>えしますか？',
+        read:'お客様がチェックインに来られました。最初に何と言ってお迎えしますか？',
+        en:'A guest arrives to check in. What do you say to welcome them first?' },
+      { jp:'<ruby>外国人<rt>がいこくじん</rt></ruby>のお<ruby>客様<rt>きゃくさま</rt></ruby>に <ruby>英語<rt>えいご</rt></ruby>で<ruby>話<rt>はな</rt></ruby>しかけられたら、どのように<ruby>対応<rt>たいおう</rt></ruby>しますか？',
+        read:'外国人のお客様に英語で話しかけられたら、どのように対応しますか？',
+        en:'If a foreign guest speaks to you in English, how do you respond?' },
+      { jp:'お<ruby>客様<rt>きゃくさま</rt></ruby>から「<ruby>部屋<rt>へや</rt></ruby>が<ruby>寒<rt>さむ</rt></ruby>い」と<ruby>言<rt>い</rt></ruby>われました。どのように<ruby>対応<rt>たいおう</rt></ruby>しますか？',
+        read:'お客様から、部屋が寒い、と言われました。どのように対応しますか？',
+        en:'A guest says "My room is cold." How do you handle it?' },
+      { jp:'お<ruby>客様<rt>きゃくさま</rt></ruby>を<ruby>待<rt>ま</rt></ruby>たせてしまいました。<ruby>何<rt>なん</rt></ruby>と<ruby>言<rt>い</rt></ruby>って<ruby>謝<rt>あやま</rt></ruby>りますか？',
+        read:'お客様を待たせてしまいました。何と言って謝りますか？',
+        en:'You kept a guest waiting. What do you say to apologize?' },
+      { jp:'<ruby>最後<rt>さいご</rt></ruby>に、なぜ ホテルで<ruby>働<rt>はたら</rt></ruby>きたいと<ruby>思<rt>おも</rt></ruby>いましたか？',
+        read:'最後に、なぜホテルで働きたいと思いましたか？',
+        en:'Finally, why do you want to work at a hotel?' }
+    ]
   },
-  {
-    jp:'<ruby>日本<rt>にほん</rt></ruby>に<ruby>来<rt>き</rt></ruby>た きっかけを<ruby>教<rt>おし</rt></ruby>えてもらえますか？',
-    read:'日本に来たきっかけを教えてもらえますか？',
-    en:'What brought you to Japan?'
-  },
-  {
-    jp:'<ruby>現在<rt>げんざい</rt></ruby>どんな お<ruby>仕事<rt>しごと</rt></ruby>をしていますか？<ruby>具体的<rt>ぐたいてき</rt></ruby>に<ruby>説明<rt>せつめい</rt></ruby>してください。<ruby>何<rt>なん</rt></ruby>というお<ruby>店<rt>みせ</rt></ruby>で、どんなことをしていますか？',
-    read:'現在どんなお仕事をしていますか？具体的に説明してください。何というお店で、どんなことをしていますか？',
-    en:'What work do you do now? Please explain in detail — at what shop, and what do you do there?'
-  },
-  {
-    jp:'なぜ<ruby>今<rt>いま</rt></ruby>の<ruby>会社<rt>かいしゃ</rt></ruby>を<ruby>辞<rt>や</rt></ruby>めて、<ruby>違<rt>ちが</rt></ruby>う<ruby>会社<rt>かいしゃ</rt></ruby>に<ruby>行<rt>い</rt></ruby>こうと<ruby>思<rt>おも</rt></ruby>ったのですか？',
-    read:'なぜ今の会社を辞めて、違う会社に行こうと思ったのですか？',
-    en:'Why did you decide to leave your current company and move to a different one?'
-  },
-  {
-    jp:'<ruby>今<rt>いま</rt></ruby>の<ruby>会社<rt>かいしゃ</rt></ruby>を<ruby>辞<rt>や</rt></ruby>めたい<ruby>理由<rt>りゆう</rt></ruby>は<ruby>何<rt>なん</rt></ruby>ですか？',
-    read:'今の会社を辞めたい理由は何ですか？',
-    en:'What is your reason for wanting to leave your current company?'
+  // ===== 食品製造 6問 =====
+  shokuhin: {
+    label:'食品製造', estMin:6,
+    questions:[
+      { jp:'<ruby>自己紹介<rt>じこしょうかい</rt></ruby>をお<ruby>願<rt>ねが</rt></ruby>いできますか？',
+        read:'自己紹介をお願いできますか？',
+        en:'Could you introduce yourself?' },
+      { jp:'あなたの<ruby>住<rt>す</rt></ruby>んでいる<ruby>場所<rt>ばしょ</rt></ruby>、<ruby>最寄<rt>もよ</rt></ruby>りの<ruby>駅<rt>えき</rt></ruby>はどこですか？',
+        read:'あなたの住んでいる場所、最寄りの駅はどこですか？',
+        en:'Where do you live? What is your nearest train station?' },
+      { jp:'<ruby>日本<rt>にほん</rt></ruby>に<ruby>来<rt>き</rt></ruby>た きっかけを<ruby>教<rt>おし</rt></ruby>えてもらえますか？',
+        read:'日本に来たきっかけを教えてもらえますか？',
+        en:'What brought you to Japan?' },
+      { jp:'<ruby>現在<rt>げんざい</rt></ruby>どんな お<ruby>仕事<rt>しごと</rt></ruby>をしていますか？<ruby>具体的<rt>ぐたいてき</rt></ruby>に<ruby>説明<rt>せつめい</rt></ruby>してください。<ruby>何<rt>なん</rt></ruby>というお<ruby>店<rt>みせ</rt></ruby>で、どんなことをしていますか？',
+        read:'現在どんなお仕事をしていますか？具体的に説明してください。何というお店で、どんなことをしていますか？',
+        en:'What work do you do now? Please explain in detail — at what shop, and what do you do there?' },
+      { jp:'なぜ<ruby>今<rt>いま</rt></ruby>の<ruby>会社<rt>かいしゃ</rt></ruby>を<ruby>辞<rt>や</rt></ruby>めて、<ruby>違<rt>ちが</rt></ruby>う<ruby>会社<rt>かいしゃ</rt></ruby>に<ruby>行<rt>い</rt></ruby>こうと<ruby>思<rt>おも</rt></ruby>ったのですか？',
+        read:'なぜ今の会社を辞めて、違う会社に行こうと思ったのですか？',
+        en:'Why did you decide to leave your current company and move to a different one?' },
+      { jp:'<ruby>今<rt>いま</rt></ruby>の<ruby>会社<rt>かいしゃ</rt></ruby>を<ruby>辞<rt>や</rt></ruby>めたい<ruby>理由<rt>りゆう</rt></ruby>は<ruby>何<rt>なん</rt></ruby>ですか？',
+        read:'今の会社を辞めたい理由は何ですか？',
+        en:'What is your reason for wanting to leave your current company?' }
+    ]
   }
-];
+};
+
+// 選択された職種で決まる（START画面で確定）
+let QUESTIONS = [];
+let jobKey = '';
+let jobLabel = '';
+let ESTIMATE_MIN = 7;        // 目安時間（分）表示用（職種で変わる）
 const PREP_SECONDS = 0;      // 各質問の準備時間（秒）。0で即開始
-const ESTIMATE_MIN = 6;      // 目安時間（分）表示用
 
 /* ============================================================
    ★ 自動アップロード設定 ★
@@ -308,9 +383,21 @@ let recognition = null;
 let transcript = '';
 let recogActive = false;
 
-$('estTime').textContent = ESTIMATE_MIN;
-$('estTime2').textContent = ESTIMATE_MIN;
-$('qTotal').textContent = QUESTIONS.length;
+// 希望職種を選ぶと、目安時間と質問数の表示を更新
+function applyJobPreview(){
+  const key = $('jobSelect').value;
+  if(key && QUESTION_SETS[key]){
+    const set = QUESTION_SETS[key];
+    $('estTime').textContent = set.estMin;
+    $('estTime2').textContent = set.estMin;
+    $('qTotal').textContent = set.questions.length;
+  }else{
+    $('estTime').textContent = '6〜7';
+    $('estTime2').textContent = '6〜7';
+  }
+}
+$('jobSelect').addEventListener('change', applyJobPreview);
+applyJobPreview();
 
 /* ---------- 音声読み上げ ---------- */
 let jpVoice = null;
@@ -338,6 +425,7 @@ $('toSetup').addEventListener('click', async ()=>{
   const err = $('startErr');
   candidateName = $('nameInput').value.trim();
   candidatePhone = $('phoneInput').value.trim();
+  jobKey = $('jobSelect').value;
   if(!candidateName){
     err.textContent = 'お名前を入力してください。 / Please enter your name.';
     err.classList.add('on'); return;
@@ -346,6 +434,16 @@ $('toSetup').addEventListener('click', async ()=>{
     err.textContent = '電話番号を入力してください。 / Please enter your phone number.';
     err.classList.add('on'); return;
   }
+  if(!jobKey || !QUESTION_SETS[jobKey]){
+    err.textContent = '希望職種を選んでください。 / Please select a desired job type.';
+    err.classList.add('on'); return;
+  }
+  // 選ばれた職種の質問セットを適用
+  const set = QUESTION_SETS[jobKey];
+  QUESTIONS = set.questions;
+  jobLabel = set.label;
+  ESTIMATE_MIN = set.estMin;
+  $('qTotal').textContent = QUESTIONS.length;
   err.classList.remove('on');
   show('setup');
   await initCamera();
@@ -624,6 +722,7 @@ function buildDownloads(){
   log += `====================================\n`;
   log += `氏名 / Name : ${candidateName}\n`;
   log += `電話番号 / Phone : ${candidatePhone}\n`;
+  log += `希望職種 / Job type : ${jobLabel}\n`;
   log += `日時 / Date : ${dt.toLocaleString('ja-JP')}\n`;
   log += `録画時間 / Duration : ${fmt((Date.now()-recStartTs)/1000)}\n`;
   log += `AI推定 日本語レベル（参考）: ${est.level}  (発話文字数:${est.chars||0})\n`;
@@ -667,6 +766,8 @@ function uploadToDrive(blob, filename, log, est){
     // ※mimeに "vp9,opus" のようにカンマが含まれるため 'base64,' で分割する
     const b64 = String(reader.result).split('base64,')[1] || '';
     const payload = JSON.stringify({
+      kind: jobKey,
+      jobType: jobLabel,
       name: candidateName || '無記名',
       phone: candidatePhone || '',
       aiLevel: (est && est.level) || '',
